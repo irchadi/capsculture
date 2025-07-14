@@ -9,7 +9,6 @@ class AuthController {
 
     public function __construct(PDO $pdo) {
         $this->db = $pdo;
-        session_start(); // Toujours démarrer la session dans le contrôleur d’auth
     }
 
     /**
