@@ -18,3 +18,10 @@ Capsculture est une application web développée en PHP natif, proposant chaque 
 
 ## Auteur
 [irchadi](https://github.com/irchadi)
+
+## Structure
+- `app/` : Contrôleurs, modèles, vues
+- `core/` : Classes de base
+- `config/` : Configuration
+- `public/` : Point d’entrée de l’application (web root)
+- `schema.sql` : Structure de la base de données
