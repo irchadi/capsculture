@@ -9,9 +9,12 @@ class AuthController {
 
     public function __construct(PDO $pdo) {
         $this->db = $pdo;
-        session_start(); // Démarrer la session
+        session_start(); // Toujours démarrer la session dans le contrôleur d’auth
     }
 
+    /**
+     * Connexion utilisateur
+     */
     public function login() {
         $id = $_POST['identifier'] ?? '';
         $pass = $_POST['password'] ?? '';
@@ -26,36 +29,68 @@ class AuthController {
                 'username' => $user['username'],
                 'role' => $user['role']
             ];
-            header("Location: /router.php?action=dashboard");
+
+            // Redirection selon le rôle
+            if ($user['role'] === 'admin') {
+                header("Location: /admin_dashboard.php");
+            } else {
+                header("Location: /user_dashboard.php");
+            }
+            exit;
         } else {
             echo "Identifiants incorrects.";
         }
     }
 
+    /**
+     * Enregistrement d’un utilisateur
+     */
+    public function register() {
+        $username = $_POST['username'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+
+        if ($username && $email && $password) {
+            // Vérifie si l'utilisateur existe déjà
+            $check = $this->db->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+            $check->execute([$username, $email]);
+            if ($check->fetch()) {
+                echo "Ce nom d'utilisateur ou cet email est déjà utilisé.";
+                return;
+            }
+
+            // Hash du mot de passe
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+
+            // Insertion
+            $stmt = $this->db->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, 'user')");
+            $stmt->execute([$username, $email, $hash]);
+
+            echo "Compte créé avec succès. <a href='/app/views/login.php'>Se connecter</a>";
+        } else {
+            echo "Tous les champs sont requis.";
+        }
+    }
+
+    /**
+     * Déconnexion utilisateur
+     */
+    public function logout() {
+        session_start();
+        session_destroy();
+        header("Location: /app/views/login.php");
+        exit;
+    }
+
+    /**
+     * Exemple de dashboard (non utilisé ici)
+     */
     public function dashboard() {
         if (!isset($_SESSION['user'])) {
             header("Location: /app/views/login.php");
             exit;
         }
 
-        $role = $_SESSION['user']['role'];
-        echo "<h1>Bienvenue, " . htmlspecialchars($_SESSION['user']['username']) . "</h1>";
-
-        if ($role === 'admin') {
-            echo "<p>Vous êtes connecté en tant qu'administrateur.</p>";
-            // Lien vers admin.php
-        } else {
-            echo "<p>Vous êtes connecté comme utilisateur standard.</p>";
-            // Lien vers user.php
-        }
-
-        echo '<br><a href="/router.php?action=logout">Se déconnecter</a>';
-    }
-
-    public function logout() {
-        session_start();
-        session_destroy();
-        header("Location: /app/views/login.php");
+        echo "Bienvenue " . htmlspecialchars($_SESSION['user']['username']) . " (" . $_SESSION['user']['role'] . ")";
     }
 }
-

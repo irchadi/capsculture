@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 require_once __DIR__ . '/../config/config.php'; // Connexion PDO via $pdo
 
 $stmt = $pdo->query("SELECT * FROM facts ORDER BY created_at DESC LIMIT 5");
